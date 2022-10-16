@@ -44,39 +44,3 @@ purrr::walk2(
         cat(jsonlite::prettify(md_json), file = filename)
     }
 )
-
-
-# Parse data ----------------------------------------------------------------------------------
-
-parsed_save_dir <- fs::path("data", "parsed", "meter_data")
-fs::dir_create(parsed_save_dir)
-
-tictoc::tic()
-meter_data <- purrr::map_dfr(
-    fs::dir_ls(raw_save_dir, glob = "*.json"),
-    eldata::parse_meter_data
-)
-tictoc::toc()
-
-purrr::walk(
-    fs::dir_ls(raw_save_dir, glob = "*.json"),
-    function(json_file)
-    {
-        parsed_meter_data <- eldata::parse_meter_data(json_file)
-
-        base_filename <- tools::file_path_sans_ext(basename(json_file))
-        readr::write_delim(
-            parsed_meter_data,
-            file = fs::path(parsed_save_dir, base_filename, ext = "csv"),
-            delim = ";", progress = FALSE
-        )
-    }
-)
-
-meter_data <- readr::read_delim(fs::dir_ls(parsed_save_dir, glob = "*.csv")) %>%
-    dplyr::mutate(
-        dplyr::across(
-            c("StartTime", "EndTime"),
-            ~ lubridate::with_tz(.x, tzone = "CET")
-        )
-    )
