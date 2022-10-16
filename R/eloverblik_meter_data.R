@@ -14,11 +14,23 @@ download_meter_data <- function(dateFrom, dateTo, aggregation, meteringpoint, da
     )
 }
 
-parse_meter_data <- function(response)
-{
-    raw_content <- httr::content(response, as = 'raw')
+# parse_meter_data <- function(response)
+# {
+#     raw_content <- httr::content(response, as = 'raw')
+#
+#     parsed_content <- RcppSimdJson::fparse(raw_content)
 
-    parsed_content <- RcppSimdJson::fparse(raw_content)
+
+parse_meter_data <- function(json_file)
+{
+    raw_meter_data <- extract_meter_data(json_file)
+    munge_meter_data(raw_meter_data)
+}
+
+
+extract_meter_data <- function(json_file)
+{
+    parsed_content <- RcppSimdJson::fload(json_file)
 
     timeseries_data <- purrr::chuck(parsed_content, "result", "MyEnergyData_MarketDocument", 1, "TimeSeries", "Period", 1)
 
@@ -40,7 +52,11 @@ parse_meter_data <- function(response)
         }
     ) %>%
         tibble::as_tibble()
+}
 
+
+munge_meter_data <- function(raw_meter_data)
+{
     # From the document "CUSTOMER AND THIRD PARTY API FOR DATAHUB (ELOVERBLIK) - DATA DESCRIPTION"
     resolution <- c(
         "PT15M" = "15 min",
@@ -65,8 +81,10 @@ parse_meter_data <- function(response)
                 ~ as.POSIXct(.x, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
             ),
             StartDayCET = lubridate::with_tz(StartDay, "CET"),
-            EndTime = clock::add_hours(StartDayCET, as.integer(position)),
+            HourOfDay = as.integer(position),
+            EndTime = clock::add_hours(StartDayCET, HourOfDay),
             StartTime = clock::add_hours(EndTime, -1),
+            Date = lubridate::date(StartTime),
             Consumption = as.numeric(out_Quantity.quantity),
             Quality = quality[out_Quantity.quality],
             Resolution = resolution[Resolution]
@@ -74,10 +92,21 @@ parse_meter_data <- function(response)
 
     meter_data %>%
         dplyr::select(
+            Date,
+            HourOfDay,
             StartTime,
             EndTime,
             Consumption,
             Quality,
             Resolution
         )
+}
+
+
+load_meter_data <- function(raw_folder)
+{
+    json_files <- fs::dir_ls(raw_folder, glob = "*.json")
+
+    purrr::map_dfr(json_files, extract_meter_data) %>%
+        munge_meter_data()
 }
