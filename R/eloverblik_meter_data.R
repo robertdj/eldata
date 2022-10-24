@@ -52,7 +52,7 @@ extract_meter_data <- function(json_file)
 
             return(md)
         }
-    ) %>%
+    ) |>
         tibble::as_tibble()
 }
 
@@ -76,7 +76,7 @@ munge_meter_data <- function(raw_meter_data)
         "A05" = "Incomplete"
     )
 
-    meter_data <- raw_meter_data %>%
+    meter_data <- raw_meter_data |>
         dplyr::mutate(
             dplyr::across(
                 c("StartDay", "EndDay"),
@@ -92,7 +92,7 @@ munge_meter_data <- function(raw_meter_data)
             Resolution = resolution[Resolution]
         )
 
-    meter_data %>%
+    meter_data |>
         dplyr::select(
             Date,
             HourOfDay,
@@ -109,6 +109,6 @@ load_meter_data <- function(raw_folder)
 {
     json_files <- fs::dir_ls(raw_folder, glob = "*.json")
 
-    purrr::map_dfr(json_files, extract_meter_data) %>%
+    purrr::map_dfr(json_files, extract_meter_data) |>
         munge_meter_data()
 }

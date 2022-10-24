@@ -20,12 +20,12 @@ parse_spot_prices <- function(response)
 
     format_string <- "%Y-%m-%dT%H:%M:%S"
 
-    tibble::tibble(parsed_response$records) %>%
+    tibble::tibble(parsed_response$records) |>
         dplyr::mutate(
             HourUTC = as.POSIXct(HourUTC, format = format_string, tz = "UTC"),
             HourDK = as.POSIXct(HourDK, format = format_string, tz = "CET"),
             dplyr::across(c("SpotPriceDKK", "SpotPriceEUR"), ~ .x / 1000)
-        ) %>%
+        ) |>
         dplyr::arrange(HourDK)
 }
 
@@ -51,7 +51,7 @@ load_spot_prices <- function(raw_folder)
             SpotPriceDKK = "numeric",
             SpotPriceEUR = "numeric"
         )
-    ) %>%
+    ) |>
         dplyr::mutate(
             HourDK = lubridate::with_tz(HourDK, tzone = "CET")
         )
