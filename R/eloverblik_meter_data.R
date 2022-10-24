@@ -32,7 +32,9 @@ extract_meter_data <- function(json_file)
 {
     parsed_content <- RcppSimdJson::fload(json_file)
 
-    timeseries_data <- purrr::chuck(parsed_content, "result", "MyEnergyData_MarketDocument", 1, "TimeSeries", "Period", 1)
+    timeseries_data <- purrr::chuck(
+        parsed_content, "result", "MyEnergyData_MarketDocument", 1, "TimeSeries", "Period", 1
+    )
 
     raw_meter_data_list <- purrr::chuck(timeseries_data, "Point")
 
