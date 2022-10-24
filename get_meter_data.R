@@ -1,3 +1,4 @@
+dotenv::load_dot_env()
 library(magrittr)
 
 
@@ -20,7 +21,7 @@ missing_meter_data <- meter_data_input %>%
 
 if (nrow(missing_meter_data) > 0)
 {
-    dat <- get_data_access_token()
+    dat <- eldata::get_data_access_token()
 }
 
 meter_data_responses <- missing_meter_data %>%
