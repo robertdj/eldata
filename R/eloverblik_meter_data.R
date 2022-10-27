@@ -46,8 +46,8 @@ extract_meter_data <- function(json_file)
         list(raw_meter_data_list, start_stop_times_list, meassurement_resolution),
         function(md, times, res)
         {
-            md$StartDay <- times$start
-            md$EndDay <- times$end
+            md$DayStartUTC <- times$start
+            md$DayEndUTC <- times$end
             md$Resolution <- res
 
             return(md)
@@ -79,14 +79,14 @@ munge_meter_data <- function(raw_meter_data)
     meter_data <- raw_meter_data |>
         dplyr::mutate(
             dplyr::across(
-                c("StartDay", "EndDay"),
-                ~ as.POSIXct(.x, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
+                c("DayStartUTC", "DayEndUTC"),
+                ~ as.POSIXct(.x, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC"),
             ),
-            StartDayCET = lubridate::with_tz(StartDay, "CET"),
             HourOfDay = as.integer(position),
-            EndTime = clock::add_hours(StartDayCET, HourOfDay),
-            StartTime = clock::add_hours(EndTime, -1),
-            Date = lubridate::date(StartTime),
+            EndTimeUTC = clock::add_hours(DayStartUTC, HourOfDay),
+            StartTimeUTC = clock::add_hours(EndTimeUTC, -1),
+            StartTimeCET = lubridate::with_tz(StartTimeUTC, "CET"),
+            Date = lubridate::date(StartTimeCET),
             Consumption = as.numeric(out_Quantity.quantity),
             Quality = quality[out_Quantity.quality],
             Resolution = resolution[Resolution]
@@ -96,8 +96,8 @@ munge_meter_data <- function(raw_meter_data)
         dplyr::select(
             Date,
             HourOfDay,
-            StartTime,
-            EndTime,
+            StartTimeUTC,
+            EndTimeUTC,
             Consumption,
             Quality,
             Resolution
@@ -109,6 +109,7 @@ load_meter_data <- function(raw_folder)
 {
     json_files <- fs::dir_ls(raw_folder, glob = "*.json")
 
-    purrr::map_dfr(json_files, extract_meter_data) |>
-        munge_meter_data()
+    raw_meter_data <- purrr::map_dfr(json_files, extract_meter_data)
+
+    munge_meter_data(raw_meter_data)
 }
