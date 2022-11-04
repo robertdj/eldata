@@ -1,5 +1,4 @@
 dotenv::load_dot_env()
-library(magrittr)
 
 raw_save_dir <- fs::path("data", "raw", "spot_prices")
 fs::dir_create(raw_save_dir)
