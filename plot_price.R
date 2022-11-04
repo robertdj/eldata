@@ -2,7 +2,12 @@ library(ggplot2)
 
 meter_data <- load_meter_data("data/raw/meter_data")
 spot_prices <- load_spot_prices("data/raw/spot_prices")
-fees <- read_fees("fees.csv")
+
+all_fees_files <- fs::path("data", c("energinet", "fixed_price", "netcompany", "tax_fees"), ext = "csv")
+fees <- read_fees(all_fees_files) |>
+    tidyr::drop_na()
+# Upper bound on margin
+fees$Margin <- 0.1
 
 consumption_and_spot <- dplyr::inner_join(meter_data, spot_prices, by = c("StartTimeUTC" = "HourUTC"))
 consumption_and_prices <- dplyr::inner_join(consumption_and_spot, fees, by = c("Date", "HourOfDay"))
@@ -47,7 +52,7 @@ long_daily_tbl <- daily_tbl |>
     ) |>
     dplyr::group_by(Type, Month) |>
     dplyr::mutate(
-        AccumulatedPrice = cumsum(Price)
+        AccumulatedMonthlyPrice = cumsum(Price)
     ) |>
     dplyr::ungroup()
 
@@ -55,10 +60,10 @@ long_daily_tbl <- daily_tbl |>
 # Price plot ----------------------------------------------------------------------------------
 
 long_daily_tbl |>
-    ggplot(aes(DayOfMonth, AccumulatedPrice, group = Type, color = Type)) +
+    ggplot(aes(DayOfMonth, AccumulatedMonthlyPrice, group = Type, color = Type)) +
     facet_wrap(~ Month, scales = "free_y") +
     xlab("Day of month") +
-    ylab("Accumulated daily bill") +
+    ylab("Accumulated monthly bill") +
     geom_step()
 
 
