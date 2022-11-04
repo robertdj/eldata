@@ -1,3 +1,10 @@
 ^eldata\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^README\.md$
+^cron$
+^doc$
+^data$
+^scripts$
+^\.env$
+

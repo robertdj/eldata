@@ -26,7 +26,7 @@ parse_spot_prices <- function(response)
             HourDK = as.POSIXct(HourDK, format = format_string, tz = "CET"),
             dplyr::across(c("SpotPriceDKK", "SpotPriceEUR"), ~ .x / 1000)
         ) |>
-        dplyr::arrange(HourDK)
+        dplyr::arrange(HourUTC)
 }
 
 

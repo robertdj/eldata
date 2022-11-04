@@ -17,4 +17,6 @@ Imports:
     lubridate,
     purrr,
     RcppSimdJson,
-    tibble
+    readr,
+    tibble,
+    tidyr
