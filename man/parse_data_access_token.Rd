@@ -2,7 +2,7 @@
 % Please edit documentation in R/eloverblik_data_access_token.R
 \name{parse_data_access_token}
 \alias{parse_data_access_token}
-\title{Parse data access toekn response}
+\title{Parse data access token response}
 \usage{
 parse_data_access_token(response)
 }
@@ -10,5 +10,5 @@ parse_data_access_token(response)
 \item{response}{Response from \link{download_data_access_token}.}
 }
 \description{
-Parse data access toekn response
+Parse data access token response
 }

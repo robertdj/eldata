@@ -13,7 +13,7 @@ download_data_access_token <- function(refresh_token = get_refresh_token())
 }
 
 
-#' Parse data access toekn response
+#' Parse data access token response
 #'
 #' @param response Response from [download_data_access_token].
 parse_data_access_token <- function(response)
