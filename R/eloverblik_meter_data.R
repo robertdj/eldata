@@ -54,6 +54,11 @@ extract_meter_data <- function(json_file)
         }
     ) |>
         tibble::as_tibble()
+
+    # id <- purrr::chuck(parsed_content, "result", "id")
+    # raw_meter_data$MeterId <- id
+
+    return(raw_meter_data)
 }
 
 
