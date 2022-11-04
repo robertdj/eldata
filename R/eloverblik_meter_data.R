@@ -1,5 +1,27 @@
+#' Download meter data
+#'
+#' The API is described on a Swagger page: <https://api.eloverblik.dk/CustomerApi/index.html>.
+#'
+#' @param dateFrom `[Date]` The start date.
+#' @param dateTo `[Date]` The end date.
+#' @param aggregation `[character(1)]` Time aggregation. Allowed values are "Actual", "Quarter", "Hour", "Day", "Month", "Year".
+#' @param meteringpoint `[character(1)]` A single metering point to get data for.
+#' @param dat `[character(1)]` Data access token from [get_data_access_token()].
+#'
+#' @return A `{httr}` response.
+#'
+#' @export
 download_meter_data <- function(dateFrom, dateTo, aggregation, meteringpoint, dat)
 {
+    assertthat::assert_that(
+        assertthat::is.date(dateFrom),
+        assertthat::is.date(dateTo),
+        assertthat::is.string(aggregation),
+        aggregation %in% c("Actual", "Quarter", "Hour", "Day", "Month", "Year"),
+        assertthat::is.string(meteringpoint),
+        assertthat::is.string(dat)
+    )
+
     httr::POST(
         glue::glue("https://api.eloverblik.dk/customerapi/api/meterdata/gettimeseries/{dateFrom}/{dateTo}/{aggregation}"),
         httr::content_type_json(),
@@ -14,13 +36,18 @@ download_meter_data <- function(dateFrom, dateTo, aggregation, meteringpoint, da
     )
 }
 
-# parse_meter_data <- function(response)
-# {
-#     raw_content <- httr::content(response, as = 'raw')
-#
-#     parsed_content <- RcppSimdJson::fparse(raw_content)
 
-
+#' Parse meter data response
+#'
+#' Parse meter data into a `tibble`.
+#'
+#' @param json_file JSON content from a Response from [download_spot_prices].
+#'
+#' @return A `tibble` with columns `Date`, `HourOfDay`, `StartTimeUTC`, `EndTimeUTC`, `Consumption`, `Quality`, `Resolution`.
+#'
+#' @details Because the data source is brittle and I only include a subset of the data in the output of this function, I save the raw JSON content first instead of parsing the response.
+#'
+#' @export
 parse_meter_data <- function(json_file)
 {
     raw_meter_data <- extract_meter_data(json_file)
@@ -110,6 +137,15 @@ munge_meter_data <- function(raw_meter_data)
 }
 
 
+#' Load saved meter data
+#'
+#' Raw meter data saved in JSON is loaded and parsed.
+#'
+#' @param raw_folder Folder with JSON files.
+#'
+#' @inherit parse_meter_data return
+#'
+#' @export
 load_meter_data <- function(raw_folder)
 {
     json_files <- fs::dir_ls(raw_folder, glob = "*.json")

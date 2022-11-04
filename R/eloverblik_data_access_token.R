@@ -1,3 +1,8 @@
+#' Download data access token for Eloverblik
+#'
+#' @inheritParams get_data_access_token
+#'
+#' @return A `{httr}` response.
 download_data_access_token <- function(refresh_token = get_refresh_token())
 {
     httr::GET(
@@ -8,6 +13,9 @@ download_data_access_token <- function(refresh_token = get_refresh_token())
 }
 
 
+#' Parse data access token response
+#'
+#' @param response Response from [download_data_access_token].
 parse_data_access_token <- function(response)
 {
     httr::stop_for_status(response)
@@ -18,6 +26,13 @@ parse_data_access_token <- function(response)
 }
 
 
+#' Get data access token for Eloverblik
+#'
+#' @param refresh_token A valid refresh token
+#'
+#' @return The data access token as a string.
+#'
+#' @export
 get_data_access_token <- function(refresh_token = get_refresh_token())
 {
     response <- download_data_access_token(refresh_token)
