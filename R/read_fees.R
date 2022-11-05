@@ -1,4 +1,11 @@
-read_fees <- function(all_fees_file)
+#' Read all fees files
+#'
+#' @param all_fees_files A vector of filenames with fees. Currently all CSV files in `data/fees`.
+#'
+#' @return A `tibble` with all fees for every hour of every day.
+#'
+#' @export
+read_fees <- function(all_fees_files)
 {
     all_wide_fees <- purrr::map(
         all_fees_files,
