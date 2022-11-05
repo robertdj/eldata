@@ -67,11 +67,13 @@ load_spot_prices <- function(raw_folder)
 {
     csv_files <- fs::dir_ls(raw_folder, glob = "*.csv")
 
+    format_string <- "%Y-%m-%dT%H:%M:%SZ"
+
     readr::read_delim(
         csv_files,
         col_types = readr::cols(
-            HourUTC = readr::col_datetime(format = "%Y-%m-%dT%H:%M:%SZ"),
-            HourDK = readr::col_datetime(format = "%Y-%m-%dT%H:%M:%SZ"),
+            HourUTC = readr::col_datetime(format = format_string),
+            HourDK = readr::col_datetime(format = format_string),
             PriceArea = "character",
             SpotPriceDKK = "numeric",
             SpotPriceEUR = "numeric"
