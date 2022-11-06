@@ -29,7 +29,7 @@ Spot price data is publicly available.
 Household consumption data requires authentication.
 First a refresh token is required by logging in to Eloverblik -- check their docs.
 
-{eldata} expects to find the refresh token for Eloverblik in the environment variable `ELOVERBLIK_TOKEN`.
+If you don't want to explicitly pass a refresh token, {eldata} looks in the environment variable `ELOVERBLIK_TOKEN`.
 To this end I save them in the local file `.env` (that is not included in this repo) and make them available in R with the [{dotenv} package](https://cran.r-project.org/package=dotenv).
 
 
