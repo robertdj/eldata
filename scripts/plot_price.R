@@ -1,10 +1,10 @@
 library(ggplot2)
 
-meter_data <- load_meter_data("data/raw/meter_data")
-spot_prices <- load_spot_prices("data/raw/spot_prices")
+meter_data <- eldata::load_meter_data("data/raw/meter_data")
+spot_prices <- eldata::load_spot_prices("data/raw/spot_prices")
 
-all_fees_files <- fs::path("data", c("energinet", "fixed_price", "netcompany", "tax_fees"), ext = "csv")
-fees <- read_fees(all_fees_files) |>
+all_fees_files <- fs::dir_ls(here::here("data", "fees"), glob = "*.csv")
+fees <- eldata::read_fees(all_fees_files) |>
     tidyr::drop_na()
 # Upper bound on margin
 fees$Margin <- 0.1
