@@ -14,7 +14,7 @@ The package contains functionality to get
 {eldata} is only on GitHub and can be installed using the [remotes package](https://remotes.r-lib.org) with the command:
 
 ``` r
-remotes::install_github("robertdj/pkg.peek")
+remotes::install_github("robertdj/eldata")
 ```
 
 If you want to run the scripts and clone this repo you can also install the package from the local copy in (at least) two ways:
