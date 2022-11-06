@@ -9,6 +9,20 @@ The package contains functionality to get
 - Spot prices from [Energi data service](https://www.energidataservice.dk).
 
 
+# Installation
+
+{eldata} is only on GitHub and can be installed using the [remotes package](https://remotes.r-lib.org) with the command:
+
+``` r
+remotes::install_github("robertdj/pkg.peek")
+```
+
+If you want to run the scripts and clone this repo you can also install the package from the local copy in (at least) two ways:
+
+- With RStudio: Open `eldata.Rproj` and click "Install" in the "Build" pane.
+- Navigate to the project's root folder and run `devtools::Install()`.
+
+
 # Data access
 
 Spot price data is publicly available.
