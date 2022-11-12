@@ -9,10 +9,12 @@ fs::dir_create(raw_save_dir)
 this_month <- lubridate::floor_date(lubridate::today("CET"), unit = "month")
 last_month <- clock::add_months(this_month, -1)
 
+metering_point = Sys.getenv("ELOVERBLIK_METERING_POINT")
+
 meter_data_input <- tibble::tibble(
     dateFrom = seq.Date(from = as.Date("2020-01-01"), to = last_month, by = "month"),
     dateTo = clock::add_months(dateFrom, 1),
-    filename = fs::path(raw_save_dir, as.character(dateFrom, format = "%Y-%m"), ext = "json")
+    filename = fs::path(raw_save_dir, metering_point, as.character(dateFrom, format = "%Y-%m"), ext = "json")
 )
 
 missing_meter_data <- meter_data_input %>%
@@ -27,7 +29,7 @@ meter_data_responses <- missing_meter_data %>%
     dplyr::select(dateFrom, dateTo) %>%
     purrr::pmap(
         eldata::download_meter_data,
-        aggregation = "Actual", meteringpoint = Sys.getenv("ELOVERBLIK_METERING_POINT"), dat = dat
+        aggregation = "Actual", meteringpoint = metering_point, dat = dat
     )
 
 is_response_successful <- purrr::map_lgl(
