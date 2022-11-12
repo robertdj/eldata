@@ -10,11 +10,11 @@ spot_prices_input <- tibble::tibble(
     filename = fs::path(raw_save_dir, as.character(start, format = "%Y-%m"), ext = "csv")
 )
 
-missing_spot_prices <- spot_prices_input %>%
+missing_spot_prices <- spot_prices_input |>
     dplyr::filter(!fs::file_exists(filename))
 
-spot_price_responses <- missing_spot_prices %>%
-    dplyr::select(start, end) %>%
+spot_price_responses <- missing_spot_prices |>
+    dplyr::select(start, end) |>
     purrr::pmap(
         eldata::download_spot_prices,
         area = "DK1"
@@ -30,7 +30,7 @@ purrr::walk2(
     missing_spot_prices$filename[is_response_successful],
     function(response, filename)
     {
-        spot_price_data <- parse_spot_prices(response)
+        spot_price_data <- eldata::parse_spot_prices(response)
         readr::write_delim(spot_price_data, file = filename, delim = ";", progress = FALSE)
     }
 )

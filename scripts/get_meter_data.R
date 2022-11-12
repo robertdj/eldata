@@ -17,7 +17,7 @@ meter_data_input <- tibble::tibble(
     filename = fs::path(raw_save_dir, metering_point, as.character(dateFrom, format = "%Y-%m"), ext = "json")
 )
 
-missing_meter_data <- meter_data_input %>%
+missing_meter_data <- meter_data_input |>
     dplyr::filter(!fs::file_exists(filename))
 
 if (nrow(missing_meter_data) > 0)
@@ -25,8 +25,8 @@ if (nrow(missing_meter_data) > 0)
     dat <- eldata::get_data_access_token()
 }
 
-meter_data_responses <- missing_meter_data %>%
-    dplyr::select(dateFrom, dateTo) %>%
+meter_data_responses <- missing_meter_data |>
+    dplyr::select(dateFrom, dateTo) |>
     purrr::pmap(
         eldata::download_meter_data,
         aggregation = "Actual", meteringpoint = metering_point, dat = dat
