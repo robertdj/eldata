@@ -82,8 +82,8 @@ extract_meter_data <- function(json_file)
     ) |>
         tibble::as_tibble()
 
-    # id <- purrr::chuck(parsed_content, "result", "id")
-    # raw_meter_data$MeterId <- id
+    id <- purrr::chuck(parsed_content, "result", "id")
+    raw_meter_data$MeterId <- id
 
     return(raw_meter_data)
 }
@@ -126,6 +126,7 @@ munge_meter_data <- function(raw_meter_data)
 
     meter_data |>
         dplyr::select(
+            MeterId,
             Date,
             HourOfDay,
             StartTimeUTC,
