@@ -1,5 +1,3 @@
-dotenv::load_dot_env()
-
 raw_save_dir <- fs::path("data", "raw", "spot_prices")
 fs::dir_create(raw_save_dir)
 
