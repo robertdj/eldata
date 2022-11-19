@@ -57,11 +57,31 @@ parse_meter_data <- function(json_file)
 
 extract_meter_data <- function(json_file)
 {
+    assertthat::assert_that(
+        assertthat::is.readable(json_file),
+        assertthat::has_extension(json_file, "json")
+    )
+
     parsed_content <- RcppSimdJson::fload(json_file)
 
-    timeseries_data <- purrr::chuck(
-        parsed_content, "result", "MyEnergyData_MarketDocument", 1, "TimeSeries", "Period", 1
-    )
+    timeseries_data <- purrr::chuck(parsed_content, "result", "MyEnergyData_MarketDocument")
+
+    is_timeseries_data_missing <- purrr::map_lgl(timeseries_data, ~ is.null(.x$TimeSeries))
+    if (any(is_timeseries_data_missing))
+    {
+        ids_with_missing_data <- purrr::chuck(parsed_content, "result", "id")[is_timeseries_data_missing]
+        message("These meters return no data: ", paste(ids_with_missing_data, collapse = ", "))
+    }
+
+    timeseries_data |>
+        purrr::discard(~ is.null(.x$TimeSeries)) |>
+        purrr::map_dfr(extract_meter_data_single_id)
+}
+
+
+extract_meter_data_single_id <- function(single_meter_data_entry)
+{
+    timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", 1)
 
     raw_meter_data_list <- purrr::chuck(timeseries_data, "Point")
 
