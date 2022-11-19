@@ -5,20 +5,20 @@
 #' @param dateFrom `[Date]` The start date.
 #' @param dateTo `[Date]` The end date.
 #' @param aggregation `[character(1)]` Time aggregation. Allowed values are "Actual", "Quarter", "Hour", "Day", "Month", "Year".
-#' @param meteringpoint `[character(1)]` A single metering point to get data for.
+#' @param metering_points `[character]` A vector of metering points to get data for.
 #' @param dat `[character(1)]` Data access token from [get_data_access_token()].
 #'
 #' @return A `{httr}` response.
 #'
 #' @export
-download_meter_data <- function(dateFrom, dateTo, aggregation, meteringpoint, dat)
+download_meter_data <- function(dateFrom, dateTo, aggregation, metering_points, dat)
 {
     assertthat::assert_that(
         assertthat::is.date(dateFrom),
         assertthat::is.date(dateTo),
         assertthat::is.string(aggregation),
         aggregation %in% c("Actual", "Quarter", "Hour", "Day", "Month", "Year"),
-        assertthat::is.string(meteringpoint),
+        is.character(metering_points),
         assertthat::is.string(dat)
     )
 
@@ -29,7 +29,7 @@ download_meter_data <- function(dateFrom, dateTo, aggregation, meteringpoint, da
         httr::add_headers(Authorization = paste('Bearer', dat)),
         body = list(
             "meteringPoints" = list(
-                "meteringPoint" = I(meteringpoint)
+                "meteringPoint" = I(metering_points)
             )
         ),
         encode = "json"
@@ -82,7 +82,7 @@ extract_meter_data <- function(json_file)
     ) |>
         tibble::as_tibble()
 
-    id <- purrr::chuck(parsed_content, "result", "id")
+    id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID")
     raw_meter_data$MeterId <- id
 
     return(raw_meter_data)
@@ -138,20 +138,49 @@ munge_meter_data <- function(raw_meter_data)
 }
 
 
+save_parsed_meter_data <- function(meter_data, parsed_folder)
+{
+    meter_data_per_id <- split(meter_data, meter_data$MeterId)
+
+    # start_date <- purrr::map_chr(meter_data_per_id, ~ min(as.character(.x[["Date"]])))
+    # end_date <- purrr::map_chr(meter_data_per_id, ~ max(as.character(.x[["Date"]])))
+    # save_names <- fs::path(parsed_folder, names(meter_data_per_id), start_date, ext = "csv")
+
+    date_range <- purrr::map(meter_data_per_id, ~ range(as.character(.x[["Date"]]))) |>
+        purrr::map_chr(~ paste(.x, collapse = "_"))
+
+    save_names <- fs::path(parsed_folder, names(meter_data_per_id), date_range, ext = "csv")
+
+    fs::dir_create(dirname(save_names))
+
+    purrr::walk2(
+        meter_data_per_id, save_names,
+        readr::write_delim, delim = ";", progress = FALSE
+    )
+}
+
+
 #' Load saved meter data
 #'
 #' Raw meter data saved in JSON is loaded and parsed.
 #'
-#' @param raw_folder Folder with JSON files.
+#' @param parsed_folder Folder with CSV files.
 #'
 #' @inherit parse_meter_data return
 #'
 #' @export
-load_meter_data <- function(raw_folder)
+load_meter_data <- function(parsed_folder)
 {
-    json_files <- fs::dir_ls(raw_folder, glob = "*.json")
+    csv_files <- fs::dir_ls(parsed_folder, glob = "*.csv")
 
-    raw_meter_data <- purrr::map_dfr(json_files, extract_meter_data)
-
-    munge_meter_data(raw_meter_data)
+    meter_data <- readr::read_delim(csv_files, delim = ";")
 }
+
+# load_meter_data <- function(raw_folder)
+# {
+#     json_files <- fs::dir_ls(raw_folder, glob = "*.json")
+#
+#     raw_meter_data <- purrr::map_dfr(json_files, extract_meter_data)
+#
+#     munge_meter_data(raw_meter_data)
+# }
