@@ -85,8 +85,17 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
     # requested (hourly consumption). The other is the profiled consumption for Q1.
     # Source: CUSTOMER AND THIRD PARTY API FOR DATAHUB (ELOVERBLIK) - DATA DESCRIPTION
     # TODO Is this robust enough?
+    business_types <- c(
+        "A01" = "Production",
+        "A04" = "Consumption",
+        "A64" = "Consumption profile"
+    )
+
     business_type <- purrr::chuck(single_meter_data_entry, "TimeSeries", "businessType")
-    consumption_id <- which(business_type == "A04")
+    consumption_id <- which(business_type %in% c("A01", "A04"))
+
+    if (length(consumption_id) != 1)
+        stop("Business type must be production ('A01') or consumtion ('A04'). It is ", business_type)
 
     timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", consumption_id)
 
@@ -111,6 +120,7 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
 
     id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID")
     raw_meter_data$MeterId <- id[consumption_id]
+    raw_meter_data$BusinessType <- business_types[business_type]
 
     return(raw_meter_data)
 }
