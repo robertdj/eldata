@@ -85,19 +85,22 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
     # requested (hourly consumption). The other is the profiled consumption for Q1.
     # Source: CUSTOMER AND THIRD PARTY API FOR DATAHUB (ELOVERBLIK) - DATA DESCRIPTION
     # TODO Is this robust enough?
-    business_types <- c(
+    possible_business_types <- c(
         "A01" = "Production",
         "A04" = "Consumption",
         "A64" = "Consumption profile"
     )
 
-    business_type <- purrr::chuck(single_meter_data_entry, "TimeSeries", "businessType")
-    consumption_id <- which(business_type %in% c("A01", "A04"))
+    present_business_types <- purrr::chuck(single_meter_data_entry, "TimeSeries", "businessType")
+    measurement_idx <- which(present_business_types %in% c("A01", "A04"))
 
-    if (length(consumption_id) != 1)
-        stop("Business type must be production ('A01') or consumtion ('A04'). It is ", business_type)
+    if (length(measurement_idx) != 1)
+        stop(
+            "Business type must be production ('A01') or consumtion ('A04').",
+            "Here we have: ", present_business_types
+        )
 
-    timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", consumption_id)
+    timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", measurement_idx)
 
     raw_meter_data_list <- purrr::chuck(timeseries_data, "Point")
 
@@ -118,9 +121,11 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
     ) |>
         tibble::as_tibble()
 
-    id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID")
-    raw_meter_data$MeterId <- id[consumption_id]
-    raw_meter_data$BusinessType <- business_types[business_type]
+    id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID", measurement_idx)
+    raw_meter_data$MeterId <- id[measurement_idx]
+
+    measurement_type <- possible_business_types[measurement_idx]
+    raw_meter_data$BusinessType <- measurement_type
 
     return(raw_meter_data)
 }
@@ -170,6 +175,7 @@ munge_meter_data <- function(raw_meter_data)
             EndTimeUTC,
             Consumption,
             Quality,
+            BusinessType,
             Resolution
         )
 }
@@ -178,10 +184,6 @@ munge_meter_data <- function(raw_meter_data)
 save_parsed_meter_data <- function(meter_data, parsed_folder)
 {
     meter_data_per_id <- split(meter_data, meter_data$MeterId)
-
-    # start_date <- purrr::map_chr(meter_data_per_id, ~ min(as.character(.x[["Date"]])))
-    # end_date <- purrr::map_chr(meter_data_per_id, ~ max(as.character(.x[["Date"]])))
-    # save_names <- fs::path(parsed_folder, names(meter_data_per_id), start_date, ext = "csv")
 
     date_range <- purrr::map(meter_data_per_id, ~ range(as.character(.x[["Date"]]))) |>
         purrr::map_chr(~ paste(.x, collapse = "_"))
