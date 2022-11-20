@@ -81,7 +81,14 @@ extract_meter_data <- function(json_file)
 
 extract_meter_data_single_id <- function(single_meter_data_entry)
 {
-    timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", 1)
+    # Sometimes (e.g. from 2020-03-01 to 2020-0 there are *two* elements in 'Period'. One is the
+    # requested (hourly consumption). The other is the profiled consumption for Q1.
+    # Source: CUSTOMER AND THIRD PARTY API FOR DATAHUB (ELOVERBLIK) - DATA DESCRIPTION
+    # TODO Is this robust enough?
+    business_type <- purrr::chuck(single_meter_data_entry, "TimeSeries", "businessType")
+    consumption_id <- which(business_type == "A04")
+
+    timeseries_data <- purrr::chuck(single_meter_data_entry, "TimeSeries", "Period", consumption_id)
 
     raw_meter_data_list <- purrr::chuck(timeseries_data, "Point")
 
@@ -103,7 +110,7 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
         tibble::as_tibble()
 
     id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID")
-    raw_meter_data$MeterId <- id
+    raw_meter_data$MeterId <- id[consumption_id]
 
     return(raw_meter_data)
 }
