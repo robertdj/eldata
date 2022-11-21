@@ -62,6 +62,7 @@ extract_meter_data <- function(json_file)
         assertthat::has_extension(json_file, "json")
     )
 
+    # print(json_file)
     parsed_content <- RcppSimdJson::fload(json_file)
 
     timeseries_data <- purrr::chuck(parsed_content, "result", "MyEnergyData_MarketDocument")
@@ -69,7 +70,8 @@ extract_meter_data <- function(json_file)
     is_timeseries_data_missing <- purrr::map_lgl(timeseries_data, ~ is.null(.x$TimeSeries))
     if (any(is_timeseries_data_missing))
     {
-        ids_with_missing_data <- purrr::chuck(parsed_content, "result", "id")[is_timeseries_data_missing]
+        requested_ids <- purrr::chuck(parsed_content, "result", "id")
+        ids_with_missing_data <- requested_ids[is_timeseries_data_missing]
         message("These meters return no data: ", paste(ids_with_missing_data, collapse = ", "))
     }
 
@@ -81,16 +83,9 @@ extract_meter_data <- function(json_file)
 
 extract_meter_data_single_id <- function(single_meter_data_entry)
 {
-    # Sometimes (e.g. from 2020-03-01 to 2020-0 there are *two* elements in 'Period'. One is the
-    # requested (hourly consumption). The other is the profiled consumption for Q1.
+    # Sometimes (e.g. from 2020-03-01 to 2020-04-01) there are *two* elements in 'Period'. One is
+    # the requested (hourly consumption). The other is the profiled consumption for Q1.
     # Source: CUSTOMER AND THIRD PARTY API FOR DATAHUB (ELOVERBLIK) - DATA DESCRIPTION
-    # TODO Is this robust enough?
-    possible_business_types <- c(
-        "A01" = "Production",
-        "A04" = "Consumption",
-        "A64" = "Consumption profile"
-    )
-
     present_business_types <- purrr::chuck(single_meter_data_entry, "TimeSeries", "businessType")
     measurement_idx <- which(present_business_types %in% c("A01", "A04"))
 
@@ -124,8 +119,11 @@ extract_meter_data_single_id <- function(single_meter_data_entry)
     id <- purrr::chuck(single_meter_data_entry, "TimeSeries", "mRID", measurement_idx)
     raw_meter_data$MeterId <- id[measurement_idx]
 
-    measurement_type <- possible_business_types[measurement_idx]
-    raw_meter_data$BusinessType <- measurement_type
+    business_type <- present_business_types[measurement_idx]
+    raw_meter_data$BusinessType <- business_type
+
+    measurement_units <- purrr::chuck(single_meter_data_entry, "TimeSeries", "measurement_Unit.name")
+    raw_meter_data$Unit <- measurement_units[measurement_idx]
 
     return(raw_meter_data)
 }
@@ -150,20 +148,40 @@ munge_meter_data <- function(raw_meter_data)
         "A05" = "Incomplete"
     )
 
+    business_types <- c(
+        "A01" = "Production",
+        "A04" = "Consumption",
+        "A64" = "Consumption profile"
+    )
+
+    if (any(c("P1D", "P1M", "P1Y") %in% raw_meter_data$Resolution))
+        warning("Data with resolution coarser than days has not been parsed before.")
+
     meter_data <- raw_meter_data |>
         dplyr::mutate(
             dplyr::across(
                 c("DayStartUTC", "DayEndUTC"),
                 ~ as.POSIXct(.x, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC"),
             ),
-            HourOfDay = as.integer(position),
-            EndTimeUTC = clock::add_hours(DayStartUTC, HourOfDay),
-            StartTimeUTC = clock::add_hours(EndTimeUTC, -1),
-            StartTimeCET = lubridate::with_tz(StartTimeUTC, "CET"),
-            Date = lubridate::date(StartTimeCET),
             Consumption = as.numeric(out_Quantity.quantity),
             Quality = quality[out_Quantity.quality],
-            Resolution = resolution[Resolution]
+            Resolution = resolution[Resolution],
+            BusinessType = business_types[BusinessType],
+            #
+            HourOfDay = dplyr::case_when(
+                Resolution == "15 min" ~ as.integer(ceiling(as.double(position) / 4)),
+                Resolution == "Hour" ~ as.integer(position)
+            ),
+            EndTimeUTC = dplyr::case_when(
+                Resolution == "15 min" ~ clock::add_minutes(DayStartUTC, as.double(position) * 15),
+                Resolution == "Hour" ~ clock::add_hours(DayStartUTC, HourOfDay)
+            ),
+            StartTimeUTC = dplyr::case_when(
+                Resolution == "15 min" ~ clock::add_minutes(EndTimeUTC, -15),
+                Resolution == "Hour" ~ clock::add_hours(EndTimeUTC, -1)
+            ),
+            StartTimeCET = lubridate::with_tz(StartTimeUTC, "CET"),
+            Date = lubridate::date(StartTimeCET),
         )
 
     meter_data |>
@@ -174,6 +192,7 @@ munge_meter_data <- function(raw_meter_data)
             StartTimeUTC,
             EndTimeUTC,
             Consumption,
+            Unit,
             Quality,
             BusinessType,
             Resolution
@@ -181,6 +200,14 @@ munge_meter_data <- function(raw_meter_data)
 }
 
 
+#' Save parsed meter data
+#'
+#' Save parsed meter data to CSV files -- one file per metering id.
+#'
+#' @param meter_data Dataframe from [parse_meter_data].
+#' @param parsed_folder Folder to store CSV files.
+#'
+#' @export
 save_parsed_meter_data <- function(meter_data, parsed_folder)
 {
     meter_data_per_id <- split(meter_data, meter_data$MeterId)
@@ -214,12 +241,3 @@ load_meter_data <- function(parsed_folder)
 
     meter_data <- readr::read_delim(csv_files, delim = ";")
 }
-
-# load_meter_data <- function(raw_folder)
-# {
-#     json_files <- fs::dir_ls(raw_folder, glob = "*.json")
-#
-#     raw_meter_data <- purrr::map_dfr(json_files, extract_meter_data)
-#
-#     munge_meter_data(raw_meter_data)
-# }
