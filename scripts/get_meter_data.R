@@ -71,4 +71,4 @@ purrr::walk2(
 raw_meter_data_files <- fs::dir_ls(raw_save_dir, glob = "*.json")
 parsed_meter_data <- purrr::map(raw_meter_data_files, eldata::parse_meter_data)
 
-purrr::walk(parsed_meter_data, save_parsed_meter_data, parsed_folder = fs::path("data", "parsed", "meter_data"))
+purrr::walk(parsed_meter_data, eldata::save_parsed_meter_data, parsed_folder = fs::path("data", "parsed", "meter_data"))
