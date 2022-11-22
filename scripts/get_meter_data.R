@@ -14,7 +14,7 @@ metering_points_info <- readr::read_delim(
     delim = ";",
     trim_ws = TRUE,
     col_types = readr::cols(
-        MeteringPoint = readr::col_character(),
+        MeterId = readr::col_character(),
         TokenId = readr::col_character(),
         Name = readr::col_character()
     )
@@ -23,7 +23,7 @@ metering_points_info <- readr::read_delim(
 metering_points_params <- metering_points_info |>
     dplyr::group_by(TokenId) |>
     dplyr::summarise(
-        metering_points = list(MeteringPoint)
+        metering_points = list(MeterId)
     ) |>
     dplyr::mutate(
         RefreshToken = purrr::map_chr(TokenId, Sys.getenv)
