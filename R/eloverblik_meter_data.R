@@ -62,7 +62,6 @@ extract_meter_data <- function(json_file)
         assertthat::has_extension(json_file, "json")
     )
 
-    # print(json_file)
     parsed_content <- RcppSimdJson::fload(json_file)
 
     timeseries_data <- purrr::chuck(parsed_content, "result", "MyEnergyData_MarketDocument")
@@ -173,7 +172,7 @@ munge_meter_data <- function(raw_meter_data)
                 Resolution == "Hour" ~ as.integer(position)
             ),
             EndTimeUTC = dplyr::case_when(
-                Resolution == "15 min" ~ clock::add_minutes(DayStartUTC, as.double(position) * 15),
+                Resolution == "15 min" ~ clock::add_minutes(DayStartUTC, as.integer(position) * 15),
                 Resolution == "Hour" ~ clock::add_hours(DayStartUTC, HourOfDay)
             ),
             StartTimeUTC = dplyr::case_when(
