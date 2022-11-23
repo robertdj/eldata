@@ -6,8 +6,7 @@ spot_prices <- eldata:::lazy_read_spot_prices()
 fees <- eldata:::lazy_read_fees()
 consumption_and_prices <- eldata:::lazy_join_all(meter_data, spot_prices, fees)
 price_tbl <- eldata:::lazy_read_prices(consumption_and_prices)
-daily_tbl <- eldata:::lazy_daily_prices(price_tbl) |>
-    dplyr::collect()
+daily_tbl <- eldata:::lazy_daily_prices(price_tbl)
 
 metering_points_with_data <- meter_data |>
     dplyr::distinct(MeterId) |>
@@ -46,8 +45,11 @@ server <- function(input, output, session)
         daily_tbl |>
             dplyr::filter(
                 MeterId == metering_point(),
-                dplyr::between(Date, date_range()[1], date_range()[2])
-            )
+                Date >= date_range()[1],
+                Date <= date_range()[2]
+            ) |>
+            dplyr::select(Date, DailyPriceFlex, DailyPriceFixed) |>
+            dplyr::collect()
     })
 
     long_price_data <- shiny::reactive({
