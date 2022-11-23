@@ -4,10 +4,10 @@
 \alias{load_meter_data}
 \title{Load saved meter data}
 \usage{
-load_meter_data(raw_folder)
+load_meter_data(parsed_folder)
 }
 \arguments{
-\item{raw_folder}{Folder with JSON files.}
+\item{parsed_folder}{Folder with CSV files.}
 }
 \value{
 A \code{tibble} with columns \code{Date}, \code{HourOfDay}, \code{StartTimeUTC}, \code{EndTimeUTC}, \code{Consumption}, \code{Quality}, \code{Resolution}.
