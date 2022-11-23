@@ -4,7 +4,7 @@
 \alias{download_meter_data}
 \title{Download meter data}
 \usage{
-download_meter_data(dateFrom, dateTo, aggregation, meteringpoint, dat)
+download_meter_data(dateFrom, dateTo, aggregation, metering_points, dat)
 }
 \arguments{
 \item{dateFrom}{\verb{[Date]} The start date.}
@@ -13,7 +13,7 @@ download_meter_data(dateFrom, dateTo, aggregation, meteringpoint, dat)
 
 \item{aggregation}{\verb{[character(1)]} Time aggregation. Allowed values are "Actual", "Quarter", "Hour", "Day", "Month", "Year".}
 
-\item{meteringpoint}{\verb{[character(1)]} A single metering point to get data for.}
+\item{metering_points}{\verb{[character]} A vector of metering points to get data for.}
 
 \item{dat}{\verb{[character(1)]} Data access token from \code{\link[=get_data_access_token]{get_data_access_token()}}.}
 }

@@ -1,6 +1,8 @@
 library(ggplot2)
 
-meter_data <- eldata::load_meter_data("data/raw/meter_data")
+metering_point = Sys.getenv("ELOVERBLIK_METERING_POINT")
+
+meter_data <- eldata::load_meter_data(fs::path("data/raw/meter_data", metering_point))
 spot_prices <- eldata::load_spot_prices("data/raw/spot_prices")
 
 all_fees_files <- fs::dir_ls(here::here("data", "fees"), glob = "*.csv")
