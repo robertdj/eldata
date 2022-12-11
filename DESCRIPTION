@@ -11,6 +11,7 @@ RoxygenNote: 7.2.1
 Depends:
     R (>= 4.1)
 Imports:
+    arrow (>= 10.0.0),
     clock,
     dplyr,
     fs,
