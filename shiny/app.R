@@ -1,24 +1,22 @@
 this_month_start <- lubridate::floor_date(lubridate::today("CET"), unit = "month")
 last_month_start <- clock::add_months(this_month_start, -1)
 
-meter_data <- eldata:::lazy_read_meter_data()
-spot_prices <- eldata:::lazy_read_spot_prices()
-fees <- eldata:::lazy_read_fees()
-consumption_and_prices <- eldata:::lazy_join_all(meter_data, spot_prices, fees)
-price_tbl <- eldata:::lazy_read_prices(consumption_and_prices)
-daily_tbl <- eldata:::lazy_daily_prices(price_tbl)
+meter_data <- eldata::lazy_read_meter_data()
+spot_prices <- eldata::lazy_read_spot_prices()
+fees <- eldata::lazy_read_fees()
+consumption_and_prices <- eldata::lazy_join_all(meter_data, spot_prices, fees)
+price_tbl <- eldata::lazy_read_prices(consumption_and_prices)
+daily_tbl <- eldata::lazy_daily_prices(price_tbl)
 
 metering_points_with_data <- meter_data |>
     dplyr::distinct(MeterId) |>
     dplyr::collect()
 
-metering_points_info <- eldata:::read_metering_points_info() |>
+metering_points_info <- eldata::read_metering_points_info() |>
     dplyr::inner_join(metering_points_with_data, by = 'MeterId')
 
 metering_points <- metering_points_info$MeterId
 names(metering_points) <- metering_points_info$Name
-
-# TODO Pivot to longer here?
 
 
 ui <- fluidPage(
