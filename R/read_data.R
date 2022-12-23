@@ -1,5 +1,22 @@
-# https://arrow-user2022.netlify.app/data-wrangling.html
-
+#' Lazy load of meter data
+#'
+#' There are a number of function to **lazily** load all data used in {eldata}. Check the details
+#' for more info about lazy data.
+#'
+#' @details Lazy load means that we return a query from the `{arrow}` package, but no **data** is
+#' available in R. This defers computations and (more importantly) loading of data into R so we only
+#' read the necessary data. Use [dplyr::collect()] to read the data into R.
+#'
+#' Check these resources for more info about the `{arrow}` package:
+#'  - The "dataset" vignette in the arrow package: `vignette('dataset', package = 'arrow')`.
+#'  - <https://arrow-user2022.netlify.app/data-wrangling.html>
+#'  - <https://arrow.apache.org/docs/r//reference/acero.html>
+#'
+#' @param meter_data_folder Path to the root of the meter data.
+#'
+#' @return An [arrow::FileSystemDataset()].
+#'
+#' @export
 lazy_read_meter_data <- function(meter_data_folder = here::here("data", "parsed", "meter_data"))
 {
     arrow::open_dataset(
@@ -24,6 +41,15 @@ lazy_read_meter_data <- function(meter_data_folder = here::here("data", "parsed"
 }
 
 
+#' Lazy load of spot price data
+#'
+#' @inherit lazy_read_meter_data description
+#' @inherit lazy_read_meter_data details
+#' @inherit lazy_read_meter_data return
+#'
+#' @param spot_price_folder Path to the root of the spot price data.
+#'
+#' @export
 lazy_read_spot_prices <- function(spot_price_folder = here::here("data", "parsed", "spot_prices"))
 {
     arrow::open_dataset(
@@ -42,11 +68,21 @@ lazy_read_spot_prices <- function(spot_price_folder = here::here("data", "parsed
 }
 
 
+#' Lazy load of fee data
+#'
+#' @inherit lazy_read_meter_data description
+#' @inherit lazy_read_meter_data details
+#'
+#' @param spot_price_folder Path to the root of the fee data.
+#'
+#' @return An [arrow::Table()].
+#'
+#' @export
 lazy_read_fees <- function(fees_folder = here::here("data", "fees"), margin = 0.1)
 {
     all_fees_files <- fs::dir_ls(fees_folder, glob = "*.csv")
 
-    fees <- eldata::read_fees(all_fees_files) |>
+    fees <- read_fees(all_fees_files) |>
         tidyr::drop_na() |>
         dplyr::mutate(
             Margin = margin,
@@ -69,14 +105,17 @@ lazy_read_fees <- function(fees_folder = here::here("data", "fees"), margin = 0.
 }
 
 
-lazy_read_all <- function(meter_data_folder, spot_price_folder, fees_folder)
-{
-    meter_data <- lazy_read_meter_data(meter_data_folder)
-    spot_prices <- lazy_read_spot_prices(spot_price_folder)
-    fees <- lazy_read_fees(fees_folder)
-}
-
-
+#' Join consumption data and price data
+#'
+#' Lazy join of consumption data and price data.
+#'
+#' @param meter_data Output from [lazy_read_meter_data()].
+#' @param spot_prices Output from [lazy_read_spot_prices()].
+#' @param fees Output from [lazy_read_fees()].
+#'
+#' @inherit lazy_read_meter_data return
+#'
+#' @export
 lazy_join_all <- function(meter_data, spot_prices, fees)
 {
     meter_data |>
@@ -85,9 +124,21 @@ lazy_join_all <- function(meter_data, spot_prices, fees)
 }
 
 
-lazy_read_prices <- function(consumption_and_prices, moms_factor = 1.25)
+#' Compute hourly consumption prices
+#'
+#' @param consumption_and_prices Output from [lazy_join_all()].
+#'
+#' @inherit lazy_read_meter_data return
+#'
+#' @param spot_price_folder Path to the root of the spot price data.
+#'
+#' @export
+lazy_read_prices <- function(consumption_and_prices)
 {
-    price_tbl <- consumption_and_prices |>
+    # The Danish MOMS tax
+    moms_factor = 1.25
+
+    consumption_and_prices |>
         dplyr::transmute(
             MeterId,
             Date,
@@ -103,6 +154,15 @@ lazy_read_prices <- function(consumption_and_prices, moms_factor = 1.25)
 }
 
 
+#' Compute daily consumption prices
+#'
+#' @param price_tbl Output from [lazy_read_prices()].
+#'
+#' @inherit lazy_read_meter_data return
+#'
+#' @param price_tbl Output from [lazy_read_prices()].
+#'
+#' @export
 lazy_daily_prices <- function(price_tbl)
 {
     price_tbl |>
@@ -121,12 +181,27 @@ lazy_daily_prices <- function(price_tbl)
 }
 
 
-read_metering_points_info <- function(metering_points_file = here::here("data", "metering_points.csv"))
+#' Read meter points info
+#'
+#' Metering points info in CSV format is expected to have columns:
+#'
+#' - `MeterId`
+#' - `TokenId`
+#' - `Name`
+#'
+#' @param metering_points_file The location of the CSV file.
+#' @param delim The delimiter passed on to [readr::read_delim()].
+#'
+#' @return A tibble.
+#'
+#' @export
+read_metering_points_info <- function(metering_points_file = here::here("data", "metering_points.csv"), delim = ";")
 {
-    metering_points_info <- readr::read_delim(
+    readr::read_delim(
         metering_points_file,
-        delim = ";",
+        delim = delim,
         trim_ws = TRUE,
+        progress = FALSE,
         col_types = readr::cols(
             MeterId = readr::col_character(),
             TokenId = readr::col_character(),
