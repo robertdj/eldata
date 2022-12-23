@@ -30,10 +30,10 @@ wide_to_long_fees <- function(wide_fees)
 
     nested_fees <- wide_fees |>
         dplyr::mutate(
-            Date = purrr::map2(StartDate, EndDate, seq, by = "1 day"),
-            HourOfDay = purrr::map2(StartHour, EndHour, seq, by = 1),
             .keep = "unused",
-            .before = 1
+            .before = 1,
+            Date = purrr::map2(StartDate, EndDate, seq, by = "1 day"),
+            HourOfDay = purrr::map2(StartHour, EndHour, seq, by = 1)
         )
 
     long_fees <- nested_fees |>
