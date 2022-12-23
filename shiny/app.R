@@ -29,7 +29,13 @@ ui <- fluidPage(
         end = this_month_start
     ),
 
-    plotly::plotlyOutput("accumulated_cost_plot")
+    shiny::mainPanel(
+        shiny::tabsetPanel(
+            type = "tabs",
+            shiny::tabPanel("Cost", plotly::plotlyOutput("accumulated_cost_plot")),
+            shiny::tabPanel("Daily consumption", plotly::plotlyOutput("daily_consumption_plot"))
+        )
+    )
 )
 
 
@@ -39,8 +45,8 @@ server <- function(input, output, session)
 
     date_range <- shiny::reactive({input$date_range})
 
-    price_data <- shiny::reactive({
-        daily_tbl |>
+    long_price_data <- shiny::reactive({
+        price_data <- daily_tbl |>
             dplyr::filter(
                 MeterId == metering_point(),
                 Date >= date_range()[1],
@@ -48,10 +54,8 @@ server <- function(input, output, session)
             ) |>
             dplyr::select(Date, DailyPriceFlex, DailyPriceFixed) |>
             dplyr::collect()
-    })
 
-    long_price_data <- shiny::reactive({
-        price_data() |>
+        price_data |>
             tidyr::pivot_longer(
                 c("DailyPriceFlex", "DailyPriceFixed"),
                 names_prefix = "DailyPrice",
@@ -71,6 +75,33 @@ server <- function(input, output, session)
             x = ~ Date,
             y = ~ AccumulatedPrice,
             color = ~ Type,
+            type = "scatter",
+            mode = "lines"
+        )
+    })
+
+    daily_consumption_data <- shiny::reactive({
+        consumption_and_prices |>
+            dplyr::filter(
+                MeterId == metering_point(),
+                Date >= date_range()[1],
+                Date <= date_range()[2]
+            ) |>
+            dplyr::transmute(
+                Date = strftime(Date, format = "%Y-%m-%d"),
+                HourOfDay,
+                Consumption
+            ) |>
+            dplyr::arrange(Date, HourOfDay) |>
+            dplyr::collect()
+    })
+
+    output$daily_consumption_plot <- plotly::renderPlotly({
+        plotly::plot_ly(
+            data = daily_consumption_data(),
+            x = ~ HourOfDay,
+            y = ~ Consumption,
+            color = ~ as.character(Date),
             type = "scatter",
             mode = "lines"
         )
