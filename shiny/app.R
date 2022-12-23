@@ -26,7 +26,8 @@ ui <- fluidPage(
         "date_range",
         "Date range:",
         start = last_month_start,
-        end = this_month_start
+        end = this_month_start,
+        weekstart = 1
     ),
 
     shiny::mainPanel(
