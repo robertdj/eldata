@@ -1,8 +1,9 @@
 library(ggplot2)
 
 metering_point = Sys.getenv("ELOVERBLIK_METERING_POINT")
+metering_point = metering_points[2]
 
-meter_data <- eldata::load_meter_data(fs::path("data/raw/meter_data", metering_point))
+meter_data <- eldata::load_meter_data(fs::path("data/parsed/meter_data", metering_point))
 spot_prices <- eldata::load_spot_prices("data/raw/spot_prices")
 
 all_fees_files <- fs::dir_ls(here::here("data", "fees"), glob = "*.csv")
@@ -21,6 +22,7 @@ price_tbl <- consumption_and_prices |>
         AllFees = Transport + NetTarif + Fees
     ) |>
     dplyr::transmute(
+        MeterId,
         Date,
         HourOfDay,
         StartTimeUTC,
@@ -35,7 +37,7 @@ price_tbl <- consumption_and_prices |>
     )
 
 daily_tbl <- price_tbl |>
-    dplyr::group_by(Date) |>
+    dplyr::group_by(MeterId, Date) |>
     dplyr::summarise(
         DailyPriceFlex = sum(TotalPriceFlex),
         DailyPriceFixed = sum(TotalPriceFixed)
@@ -52,7 +54,7 @@ long_daily_tbl <- daily_tbl |>
         names_to = "Type",
         values_to = "Price"
     ) |>
-    dplyr::group_by(Type, Month) |>
+    dplyr::group_by(MeterId, Type, Month) |>
     dplyr::mutate(
         AccumulatedMonthlyPrice = cumsum(Price)
     ) |>
@@ -62,11 +64,25 @@ long_daily_tbl <- daily_tbl |>
 # Price plot ----------------------------------------------------------------------------------
 
 long_daily_tbl |>
+    dplyr::filter(Date >= as.Date("2022-01-01")) |>
     ggplot(aes(DayOfMonth, AccumulatedMonthlyPrice, group = Type, color = Type)) +
     facet_wrap(~ Month, scales = "free_y") +
     xlab("Day of month") +
     ylab("Accumulated monthly bill") +
     geom_step()
+
+long_daily_tbl |>
+    dplyr::filter(Date >= as.Date("2022-01-01")) |>
+    dplyr::group_by(Type) |>
+    dplyr::mutate(
+        AccumulatedPrice = cumsum(Price)
+    ) |>
+    ggplot(aes(Date, AccumulatedPrice, group = Type, color = Type)) +
+    xlab("Date") +
+    ylab("Accumulated bill") +
+    geom_step()
+
+ggsave("monthly_bills.png", width = 20, height = 12, units = "cm")
 
 
 # Spot prices ---------------------------------------------------------------------------------
@@ -88,3 +104,15 @@ long_price_tbl |>
         type = "scatter",
         mode = "lines"
     )
+
+long_price_tbl |>
+    dplyr::filter(
+        StartTimeUTC >= as.Date("2022-08-01"),
+        StartTimeUTC <= as.Date("2022-08-30")
+    ) |>
+    ggplot(aes(StartTimeUTC, Price, group = Type, color = Type)) +
+    xlab("") +
+    ylab("Total price per kWh") +
+    geom_line()
+
+ggsave("final_price_august_2022.png", width = 18, height = 10, units = "cm")
