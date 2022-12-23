@@ -6,5 +6,5 @@
 ^doc$
 ^data$
 ^scripts$
+^shiny$
 ^\.env$
-
