@@ -7,9 +7,7 @@
 lazy_read_prices(consumption_and_prices)
 }
 \arguments{
-\item{consumption_and_prices}{Output from \code{\link[=lazy_join_all]{lazy_join_all()}}.}
-
-\item{spot_price_folder}{Path to the root of the spot price data.}
+\item{consumption_and_prices}{Output from \code{\link[=lazy_join_all]{lazy_join_all()}}}
 }
 \value{
 An \code{\link[arrow:Dataset]{arrow::FileSystemDataset()}}.

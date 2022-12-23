@@ -7,7 +7,9 @@
 lazy_read_fees(fees_folder = here::here("data", "fees"), margin = 0.1)
 }
 \arguments{
-\item{spot_price_folder}{Path to the root of the fee data.}
+\item{fees_folder}{Path to file with fees data.}
+
+\item{margin}{The margin of the electricity provider.}
 }
 \value{
 An \code{\link[arrow:Table]{arrow::Table()}}.

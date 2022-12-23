@@ -73,7 +73,8 @@ lazy_read_spot_prices <- function(spot_price_folder = here::here("data", "parsed
 #' @inherit lazy_read_meter_data description
 #' @inherit lazy_read_meter_data details
 #'
-#' @param spot_price_folder Path to the root of the fee data.
+#' @param fees_folder Path to file with fees data.
+#' @param margin The margin of the electricity provider.
 #'
 #' @return An [arrow::Table()].
 #'
@@ -130,7 +131,7 @@ lazy_join_all <- function(meter_data, spot_prices, fees)
 #'
 #' @inherit lazy_read_meter_data return
 #'
-#' @param spot_price_folder Path to the root of the spot price data.
+#' @param consumption_and_prices Output from [lazy_join_all()]
 #'
 #' @export
 lazy_read_prices <- function(consumption_and_prices)
