@@ -9,17 +9,7 @@ fs::dir_create(raw_save_dir)
 this_month <- lubridate::floor_date(lubridate::today("CET"), unit = "month")
 last_month <- clock::add_months(this_month, -1)
 
-metering_points_info <- readr::read_delim(
-    fs::path("data", "metering_points.csv"),
-    progress = FALSE,
-    delim = ";",
-    trim_ws = TRUE,
-    col_types = readr::cols(
-        MeterId = readr::col_character(),
-        TokenId = readr::col_character(),
-        Name = readr::col_character()
-    )
-)
+metering_points_info <- eldata::read_metering_points_info(fs::path("data", "metering_points.csv"))
 
 metering_points_params <- metering_points_info |>
     dplyr::group_by(TokenId) |>
