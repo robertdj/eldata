@@ -4,6 +4,7 @@ fs::dir_create(raw_save_dir)
 this_month <- lubridate::floor_date(lubridate::today("CET"), unit = "month")
 last_month <- clock::add_months(this_month, -1)
 
+# Get area from metering info file
 spot_prices_input <- tibble::tibble(
     start = seq.Date(from = as.Date("2020-01-01"), to = last_month, by = "month"),
     end = clock::add_months(start, 1),
@@ -40,8 +41,8 @@ spot_price_params <- strsplit(basename(raw_spot_price_files), "_")
 spot_price_area <- purrr::map_chr(spot_price_params, 1)
 
 parsed_save_dirs <- fs::path("data", "parsed", "spot_prices", spot_price_area)
-fs::dir_create(unique(parsed_save_dir))
+fs::dir_create(unique(parsed_save_dirs))
 
 parsed_spot_price_files <- fs::path(parsed_save_dirs, basename(raw_spot_price_files))
 
-fs::file_copy(raw_spot_price_files, parsed_spot_price_files)
+fs::file_copy(raw_spot_price_files, parsed_spot_price_files, overwrite = TRUE)
