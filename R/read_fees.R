@@ -10,12 +10,12 @@ read_fees <- function(all_fees_files)
     all_wide_fees <- purrr::map(
         all_fees_files,
         readr::read_delim,
-        delim = ";", trim_ws = TRUE, col_types = readr::cols()
+        progress = FALSE, delim = ";", trim_ws = TRUE, col_types = readr::cols()
     )
 
     all_long_fees <- purrr::map(all_wide_fees, wide_to_long_fees)
 
-    purrr::reduce(all_long_fees, dplyr::full_join, by = c("Date", "HourOfDay")) |>
+    purrr::reduce(all_long_fees, dplyr::inner_join, by = c("Date", "HourOfDay")) |>
         dplyr::arrange(Date, HourOfDay)
 }
 

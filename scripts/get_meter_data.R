@@ -11,6 +11,7 @@ last_month <- clock::add_months(this_month, -1)
 
 metering_points_info <- readr::read_delim(
     fs::path("data", "metering_points.csv"),
+    progress = FALSE,
     delim = ";",
     trim_ws = TRUE,
     col_types = readr::cols(
