@@ -1,6 +1,6 @@
 Package: eldata
 Title: Access electricity "el" data
-Version: 0.0.2
+Version: 0.1.0
 Authors@R: person("Robert", "Dahl Jacobsen", role = c("aut", "cre"), email = "cran@dahl-jacobsen.dk")
 Description: Access power data from Danish TSO and distributors through [https://eloverblik.dk] and [https://www.energidataservice.dk].
 License: MIT + file LICENSE
@@ -11,7 +11,7 @@ RoxygenNote: 7.2.1
 Depends:
     R (>= 4.1)
 Imports:
-    arrow (>= 10.0.0),
+    assertthat,
     clock,
     dplyr,
     fs,
@@ -23,3 +23,7 @@ Imports:
     readr,
     tibble,
     tidyr
+Suggests:
+    arrow (>= 10.0.0),
+    plotly,
+    shiny,
