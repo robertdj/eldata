@@ -34,6 +34,7 @@ ui <- fluidPage(
         shiny::tabsetPanel(
             type = "tabs",
             shiny::tabPanel("Cost", plotly::plotlyOutput("accumulated_cost_plot")),
+            shiny::tabPanel("Consumption", plotly::plotlyOutput("consumption_plot")),
             shiny::tabPanel("Daily consumption", plotly::plotlyOutput("daily_consumption_plot"))
         )
     )
@@ -76,6 +77,33 @@ server <- function(input, output, session)
             x = ~ Date,
             y = ~ AccumulatedPrice,
             color = ~ Type,
+            colors = "Set2",
+            type = "scatter",
+            mode = "lines",
+            line = list(shape = "hv")
+        )
+    })
+
+    consumption_data <- shiny::reactive({
+        consumption_and_prices |>
+            dplyr::filter(
+                MeterId == metering_point(),
+                Date >= date_range()[1],
+                Date <= date_range()[2]
+            ) |>
+            dplyr::select(
+                HourDK,
+                Consumption
+            ) |>
+            dplyr::arrange(HourDK) |>
+            dplyr::collect()
+    })
+
+    output$consumption_plot <- plotly::renderPlotly({
+        plotly::plot_ly(
+            data = consumption_data(),
+            x = ~ HourDK,
+            y = ~ Consumption,
             type = "scatter",
             mode = "lines"
         )
@@ -97,12 +125,16 @@ server <- function(input, output, session)
             dplyr::collect()
     })
 
+    number_of_dates <- shiny::reactive({ length(unique(daily_consumption_data()$Date)) })
+
     output$daily_consumption_plot <- plotly::renderPlotly({
         plotly::plot_ly(
             data = daily_consumption_data(),
             x = ~ HourOfDay,
             y = ~ Consumption,
             color = ~ as.character(Date),
+            # Set the number of colors to avoid warnings about the number of colors being too small
+            colors = colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(number_of_dates()),
             type = "scatter",
             mode = "lines"
         )
