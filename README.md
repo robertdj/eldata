@@ -45,7 +45,7 @@ MeterId    ; TokenId      ; Name
 ```
 
 By default, this should be located in `data/meterings_points.csv`.
-I have not included this in the repo (for obvious reasonss).
+I have not included this in the repo (for obvious reasons).
 The columns are used as follows: 
 
 - The column `MeterId` is the id from Energi data service (a long number). 
