@@ -87,7 +87,7 @@ lazy_read_fees <- function(fees_folder = here::here("data", "fees"), margin = 0.
         tidyr::drop_na() |>
         dplyr::mutate(
             Margin = margin,
-            AllFees = Transport + NetTarif + Fees
+            AllFees = Transport + NetTarif + Elafgift
         )
 
     arrow::as_arrow_table(
@@ -95,10 +95,10 @@ lazy_read_fees <- function(fees_folder = here::here("data", "fees"), margin = 0.
         schema = arrow::schema(
             Date = arrow::date32(),
             HourOfDay = arrow::int32(),
-            NetTarif = arrow::float64(),
-            FixedPrice = arrow::float64(),
             Transport = arrow::float64(),
-            Fees = arrow::float64(),
+            FixedPrice = arrow::float64(),
+            NetTarif = arrow::float64(),
+            Elafgift = arrow::float64(),
             Margin = arrow::float64(),
             AllFees = arrow::float64()
         )
